@@ -16,6 +16,9 @@ public class VerticeAeropuerto {
     public void setDato(Aeropuerto dato) { 
         this.dato = dato; 
     }
+    public Aeropuerto getDato() { 
+        return this.dato; 
+    }
 
     public LinkedList<AristaVuelo> getSalientes() {
         return this.salientes;
@@ -35,4 +38,5 @@ public class VerticeAeropuerto {
         }
         return false;
     }
+
 }
