@@ -12,6 +12,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TableColumn;
@@ -68,17 +69,40 @@ public class App extends Application {
         TextField txtDestino = new TextField("LHR");
         ChoiceBox<MetricaPeso> cbMetrica = new ChoiceBox<>(FXCollections.observableArrayList(MetricaPeso.values()));
         cbMetrica.setValue(MetricaPeso.DISTANCIA);
-        Button btnBuscar = new Button("Ruta más corta");
+        Button btnBuscar = new Button("Ruta más optima");
         TextArea salidaRuta = new TextArea();
+btnBuscar.setOnAction(e -> {
+    String o = norm(txtOrigen.getText());
+    String d = norm(txtDestino.getText());
+    MetricaPeso m = cbMetrica.getValue();
 
-        btnBuscar.setOnAction(e -> {
-            ResultadoRuta r = grafo.dijkstra(txtOrigen.getText().trim(), txtDestino.getText().trim(), cbMetrica.getValue());
-            if (!r.isEncontrada()) {
-                salidaRuta.setText("No existe ruta");
-            } else {
-                salidaRuta.setText("Ruta: " + r.getRutaAeropuertos() + "\nPeso: " + r.getPesoTotal());
-            }
-        });
+    // Validación rápida
+    if (o.isEmpty() || d.isEmpty()) {
+        alert("Error", "Debes ingresar códigos de origen y destino.");
+        return;
+    }
+    if (grafo.obtenerSalientes(o).isEmpty() && grafo.gradoEntrada(o) == 0) {
+        alert("Error", "El aeropuerto de ORIGEN (" + o + ") no existe en el grafo.");
+        return;
+    }
+    if (grafo.obtenerSalientes(d).isEmpty() && grafo.gradoEntrada(d) == 0) {
+        alert("Error", "El aeropuerto de DESTINO (" + d + ") no existe en el grafo.");
+        return;
+    }
+
+    ResultadoRuta r = grafo.dijkstra(o, d, m);
+
+    if (!r.isEncontrada()) {
+        salidaRuta.setText("No existe ruta entre " + o + " y " + d);
+        return;
+    }
+
+    salidaRuta.setText(
+        "Ruta: " + r.getRutaAeropuertos() +
+        "\nPeso total (" + m + "): " + r.getPesoTotal()
+    );
+});
+
 
         HBox buscador = new HBox(10, txtOrigen, txtDestino, cbMetrica, btnBuscar);
 
@@ -93,17 +117,78 @@ public class App extends Application {
         fDist.setPromptText("Distancia");
         Button btnAdd = new Button("Agregar vuelo");
 
-        btnAdd.setOnAction(e -> {
-            Vuelo v = new Vuelo();
-            v.setId(fId.getText());
-            v.setOrigenCodigo(fOrig.getText());
-            v.setDestinoCodigo(fDest.getText());
-            v.setDistanciaKm(Double.parseDouble(fDist.getText()));
-            grafo.agregarVuelo(v);
-            EscritorCsv.guardarVuelos("data/flights.csv", grafo);
-            vuelosData.clear();
-            vuelosData.addAll(grafo.obtenerSalientes(fOrig.getText()));
-        });
+      btnAdd.setOnAction(e -> {
+    String id = fId.getText();
+    String o  = norm(fOrig.getText());
+    String d  = norm(fDest.getText());
+    String sDist = fDist.getText();
+
+    // Validaciones básicas
+    if (id == null || id.trim().isEmpty()) {
+        alert("Error", "Ingresa un ID de vuelo (ej. F11).");
+        return;
+    }
+    if (o.isEmpty() || d.isEmpty()) {
+        alert("Error", "Ingresa códigos de ORIGEN y DESTINO.");
+        return;
+    }
+    double dist;
+    try {
+        dist = Double.parseDouble(sDist);
+        if (dist <= 0) {
+            alert("Error", "La distancia debe ser positiva.");
+            return;
+        }
+    } catch (Exception exNum) {
+        alert("Error", "Distancia inválida. Ej: 9000");
+        return;
+    }
+
+    // Verificar que los aeropuertos existan
+    boolean origenExiste  = !(grafo.obtenerSalientes(o).isEmpty() && grafo.gradoEntrada(o) == 0);
+    boolean destinoExiste = !(grafo.obtenerSalientes(d).isEmpty() && grafo.gradoEntrada(d) == 0);
+
+    if (!origenExiste) {
+        alert("Error", "El aeropuerto de ORIGEN (" + o + ") no existe en el grafo.");
+        return;
+    }
+    if (!destinoExiste) {
+        alert("Error", "El aeropuerto de DESTINO (" + d + ") no existe en el grafo.");
+        return;
+    }
+
+    // Construir vuelo
+    Vuelo v = new Vuelo();
+    v.setId(id.trim());
+    v.setOrigenCodigo(o);
+    v.setDestinoCodigo(d);
+    v.setDistanciaKm(dist);
+    // Si quieres, setea también costo/duración por defecto:
+    // v.setDuracionMin((int)(dist / 10)); // ejemplo tonto
+    // v.setCostoUsd(dist / 20.0);
+
+    boolean ok = grafo.agregarVuelo(v);
+
+    if (!ok) {
+        alert("Error", "No se pudo agregar el vuelo. Revisa que el ID no esté repetido y que los códigos existan.");
+        return;
+    }
+
+    // Persistir
+    try {
+        EscritorCsv.guardarVuelos("data/flights.csv", grafo);
+    } catch (Exception ex) {
+        alert("Error al guardar", "No se pudo guardar en flights.csv: " + ex.getMessage());
+        // opcional: revertir?
+    }
+
+    // Refrescar tabla de vuelos del ORIGEN actual
+    vuelosData.clear();
+    vuelosData.addAll(grafo.obtenerSalientes(o));
+
+    alert("OK", "Vuelo agregado y guardado.\nReinicia la app para verificar la persistencia.");
+});
+
 
         HBox formVuelo = new HBox(10, fId, fOrig, fDest, fDist, btnAdd);
 
@@ -124,4 +209,15 @@ public class App extends Application {
     public static void main(String[] args) {
         launch();
     }
+    private String norm(String s) {
+    return s == null ? "" : s.trim().toUpperCase();
+}
+
+private void alert(String titulo, String mensaje) {
+    Alert a = new Alert(Alert.AlertType.INFORMATION);
+    a.setHeaderText(titulo);
+    a.setContentText(mensaje);
+    a.showAndWait();
+}
+
 }
