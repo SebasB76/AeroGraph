@@ -21,6 +21,8 @@ public class Vuelo {
         this.horaSalida = null;
     }
 
+   
+
     public String getId() {
         return id;
     }

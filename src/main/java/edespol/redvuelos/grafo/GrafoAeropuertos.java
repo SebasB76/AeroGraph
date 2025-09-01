@@ -1,11 +1,6 @@
 package edespol.redvuelos.grafo;
 
-import java.util.AbstractMap;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.*;
 
 import edespol.redvuelos.dominio.Aeropuerto;
 import edespol.redvuelos.dominio.MetricaPeso;
@@ -15,13 +10,13 @@ public class GrafoAeropuertos {
     private LinkedList<VerticeAeropuerto> vertices;
     private Map<String, VerticeAeropuerto> mapa ;// acceso rapido por codigo de aeropuerto
     private boolean dirigido ;
+    
     public GrafoAeropuertos() {
         this.vertices = new LinkedList<>();
         this.mapa = new HashMap<String, VerticeAeropuerto>();
         this.dirigido = true;
     }
 
-        // ---------- CRUD de aeropuertos y vuelos ----------
     public boolean agregarAeropuerto(Aeropuerto a ){
         if (a == null || a.getCodigo() == null){return false;}
         if(buscarVertice(a.getCodigo()) != null) {
@@ -34,25 +29,27 @@ public class GrafoAeropuertos {
         return true;
     }
 
-    public boolean eliminarAeropuerto(String codAero) {
+    public boolean eliminarAeropuerto (String codAero) {
         VerticeAeropuerto v = buscarVertice(codAero);
-        if (v == null) return false;
-
+        if (v == null) {
+            return false;
+        }
         // quitar aristas entrantes
-        for (VerticeAeropuerto u : vertices) {
+        for (int i = 0; i < this.vertices.size(); i++) {
+            VerticeAeropuerto u = vertices.get(i);
             LinkedList<AristaVuelo> out = u.getSalientes();
             for (int j = 0; j < out.size(); j++) {
-                if (codAero.equals(out.get(j).getCodDestino())) {
+                AristaVuelo e = out.get(j);
+                if (codAero.equals(e.getCodDestino())) {
                     out.remove(j);
-                    j--; 
+                    j--;
                 }
             }
         }
-        vertices.remove(v);
-        mapa.remove(codAero);
+        this.vertices.remove(v);
+        this.mapa.remove(codAero);
         return true;
     }
-
 
     public boolean agregarVuelo (Vuelo v){
         if (v == null || v.getOrigenCodigo() == null || v.getDestinoCodigo() == null) {
@@ -60,8 +57,6 @@ public class GrafoAeropuertos {
         }
         VerticeAeropuerto origen = buscarVertice(v.getOrigenCodigo());
         VerticeAeropuerto destino = buscarVertice(v.getDestinoCodigo());
-
-
         if (origen == null || destino == null) {
             return false;
         }
@@ -72,38 +67,6 @@ public class GrafoAeropuertos {
         origen.agregarArista(a);
         return true;
     }
-
-    
-    public boolean eliminarVuelo(String vueloId) {
-        boolean eliminado = false;
-
-        for (VerticeAeropuerto v : this.vertices) {
-            if (v.eliminarAristaPorId(vueloId)) {
-                eliminado = true;
-            }
-        }
-
-        return eliminado;
-    }
-
-     public LinkedList<Vuelo> obtenerSalientes(String codigoAeropuerto) {
-        LinkedList<Vuelo> lista = new LinkedList<>();
-
-        VerticeAeropuerto v = buscarVertice(codigoAeropuerto);
-        if (v == null) {
-            return lista;
-        }
-
-        for (AristaVuelo e : v.getSalientes()) {
-            if (e.getVuelo() != null) {
-                lista.add(e.getVuelo());
-            }
-        }
-
-        return lista;
-    }
-
-    // ------------------- Internos -------------------
 
     private VerticeAeropuerto buscarVertice(String codAero) {
         return mapa.get(codAero);
@@ -118,217 +81,245 @@ public class GrafoAeropuertos {
         }
         return v.getDistanciaKm();
     }
-
-    //                      -- STATS--
     
-    public int gradoSalida(String codigo) {
-        VerticeAeropuerto v = buscarVertice(codigo);
-        if (v == null) {
-            return 0;
+
+    
+    public RutaOptima encontrarRutaOptima(String origen, String destino, MetricaPeso metrica) {
+        if (origen == null || destino == null || buscarVertice(origen) == null || buscarVertice(destino) == null) {
+            return null;
         }
-        return v.getSalientes().size();
-    }
-
-    public int gradoEntrada(String codigo) {
-        int count = 0;
-
-        for (VerticeAeropuerto v : this.vertices) {
-            for (AristaVuelo e : v.getSalientes()) {
-                if (codigo.equals(e.getCodDestino())) {
-                    count++;
+        
+        // Estructuras para Dijkstra
+        Map<String, Double> distancias = new HashMap<>();
+        Map<String, String> predecesores = new HashMap<>();
+        Map<String, Vuelo> vuelosUsados = new HashMap<>();
+        PriorityQueue<Map.Entry<String, Double>> cola = new PriorityQueue<>(
+            (a, b) -> Double.compare(a.getValue(), b.getValue()) // un min heap. devuelve el menor costo.
+        );
+        
+        // Inicialización
+        for (VerticeAeropuerto v : vertices) {
+            String codigo = v.getDato().getCodigo();
+            distancias.put(codigo, Double.MAX_VALUE);
+            predecesores.put(codigo, null);
+        }
+        distancias.put(origen, 0.0);
+        cola.offer(new AbstractMap.SimpleEntry<>(origen, 0.0));
+        
+        // Algoritmo de Dijkstra
+        while (!cola.isEmpty()) {
+            String u = cola.poll().getKey();
+            double distU = distancias.get(u);
+            
+            if (u.equals(destino)) {
+                break; // Llegamos al destino
+            }
+            
+            VerticeAeropuerto verticeU = buscarVertice(u);
+            if (verticeU == null) continue;
+            
+            for (AristaVuelo arista : verticeU.getSalientes()) {
+                String v = arista.getCodDestino();
+                double peso = calcularPeso(arista.getVuelo(), metrica);
+                
+                if (distU + peso < distancias.get(v)) {
+                    distancias.put(v, distU + peso);
+                    predecesores.put(v, u);
+                    vuelosUsados.put(v, arista.getVuelo());
+                    cola.offer(new AbstractMap.SimpleEntry<>(v, distU + peso));
                 }
             }
         }
-
-        return count;
+        
+        // Reconstruir la ruta
+        if (distancias.get(destino) == Double.MAX_VALUE) {
+            return null; // No hay ruta
+        }
+        
+        List<String> ruta = new ArrayList<>();
+        List<Vuelo> vuelosRuta = new ArrayList<>();
+        String actual = destino;
+        
+        while (actual != null) {
+            ruta.add(0, actual);
+            if (vuelosUsados.get(actual) != null) {
+                vuelosRuta.add(0, vuelosUsados.get(actual));
+            }
+            actual = predecesores.get(actual);
+        }
+        
+        return new RutaOptima(ruta, distancias.get(destino), vuelosRuta);
     }
 
-    public Aeropuerto masConectado() {
-        Aeropuerto best = null;
-        int bestDeg = -1;
-
-        for (VerticeAeropuerto v : this.vertices) {
-            String c = v.getDato().getCodigo();
-            int deg = gradoSalida(c) + gradoEntrada(c);
-            if (deg > bestDeg) {
-                bestDeg = deg;
-                best = v.getDato();
-            }
+    
+    public List<String> buscarRutaBFS(String origen, String destino) {
+        if (origen == null || destino == null || buscarVertice(origen) == null || buscarVertice(destino) == null) {
+            return null;
         }
-
-        return best;
-    }
-
-    public Aeropuerto menosConectado() {
-        Aeropuerto worst = null;
-        int worstDeg = Integer.MAX_VALUE;
-
-        for (VerticeAeropuerto v : this.vertices) {
-            String c = v.getDato().getCodigo();
-            int deg = gradoSalida(c) + gradoEntrada(c);
-            if (deg < worstDeg) {
-                worstDeg = deg;
-                worst = v.getDato();
+        
+        Queue<String> cola = new LinkedList<>();
+        Map<String, String> predecesores = new HashMap<>();
+        Set<String> visitados = new HashSet<>();
+        
+        cola.offer(origen);
+        visitados.add(origen);
+        predecesores.put(origen, null);
+        
+        while (!cola.isEmpty()) {
+            String actual = cola.poll();
+            
+            if (actual.equals(destino)) {
+                // Reconstruir ruta
+                List<String> ruta = new ArrayList<>();
+                String nodo = destino;
+                while (nodo != null) {
+                    ruta.add(0, nodo);
+                    nodo = predecesores.get(nodo);
+                }
+                return ruta;
             }
-        }
-
-        return worst;
-    }
-
-     // ------------------- BFS / DFS -------------------
-
-    public LinkedList<String> bfs(String desdeCodigo) {
-        LinkedList<String> orden = new LinkedList<>();
-
-        if (!this.mapa.containsKey(desdeCodigo)) {
-            return orden;
-        }
-
-        Map<String, Boolean> vis = new HashMap<>();
-        LinkedList<String> q = new LinkedList<>();
-
-        q.add(desdeCodigo);
-        vis.put(desdeCodigo, Boolean.TRUE);
-
-        while (!q.isEmpty()) {
-            String u = q.removeFirst();
-            orden.add(u);
-
-            VerticeAeropuerto v = buscarVertice(u);
-            if (v == null) {
-                continue;
-            }
-
-            for (AristaVuelo e : v.getSalientes()) {
-                String w = e.getCodDestino();
-                if (!vis.containsKey(w)) {
-                    vis.put(w, Boolean.TRUE);
-                    q.add(w);
+            
+            VerticeAeropuerto vertice = buscarVertice(actual);
+            for (AristaVuelo arista : vertice.getSalientes()) {
+                String vecino = arista.getCodDestino();
+                if (!visitados.contains(vecino)) {
+                    visitados.add(vecino);
+                    predecesores.put(vecino, actual);
+                    cola.offer(vecino);
                 }
             }
         }
-
-        return orden;
+        
+        return null; // No hay ruta
     }
-
-    public LinkedList<String> dfs(String desdeCodigo) {
-        LinkedList<String> orden = new LinkedList<>();
-        Map<String, Boolean> vis = new HashMap<>();
-
-        dfsRec(desdeCodigo, vis, orden);
-        return orden;
+        
+    public List<String> buscarRutaDFS(String origen, String destino) {
+        if (origen == null || destino == null || buscarVertice(origen) == null || buscarVertice(destino) == null) {
+            return null;
+        }
+        
+        Set<String> visitados = new HashSet<>();
+        Map<String, String> predecesores = new HashMap<>();
+        
+        if (dfsRecursivo(origen, destino, visitados, predecesores)) {
+            // Reconstruir ruta
+            List<String> ruta = new ArrayList<>();
+            String nodo = destino;
+            while (nodo != null) {
+                ruta.add(0, nodo);
+                nodo = predecesores.get(nodo);
+            }
+            return ruta;
+        }
+        
+        return null;
     }
-
-    private void dfsRec(String u, Map<String, Boolean> vis, LinkedList<String> orden) {
-        if (u == null || vis.containsKey(u) || !this.mapa.containsKey(u)) {
-            return;
+    
+    private boolean dfsRecursivo(String actual, String destino, Set<String> visitados, Map<String, String> predecesores) {
+        visitados.add(actual);
+        
+        if (actual.equals(destino)) {
+            return true;
         }
-
-        vis.put(u, Boolean.TRUE);
-        orden.add(u);
-
-        VerticeAeropuerto v = this.mapa.get(u);
-        for (AristaVuelo e : v.getSalientes()) {
-            dfsRec(e.getCodDestino(), vis, orden);
-        }
-    }
-
-        // ------------------- Dijkstra  -------------------
-
-    public ResultadoRuta dijkstra(String desdeCodigo, String haciaCodigo, MetricaPeso metrica) {
-        ResultadoRuta res = new ResultadoRuta();
-
-        if (!this.mapa.containsKey(desdeCodigo) || !this.mapa.containsKey(haciaCodigo)) {
-            return res;
-        }
-
-        Map<String, Double> dist = new HashMap<>();
-        Map<String, String> previo = new HashMap<>();
-        Map<String, Vuelo> vueloPrevio = new HashMap<>();
-
-        for (VerticeAeropuerto v : this.vertices) {
-            String c = v.getDato().getCodigo();
-            dist.put(c, Double.POSITIVE_INFINITY);
-            previo.put(c, null);
-            vueloPrevio.put(c, null);
-        }
-
-        dist.put(desdeCodigo, 0.0);
-
-        PriorityQueue<Map.Entry<String, Double>> pq =
-            new PriorityQueue<>(Comparator.comparingDouble(Map.Entry::getValue));
-
-        pq.offer(new AbstractMap.SimpleEntry<>(desdeCodigo, 0.0));
-
-        while (!pq.isEmpty()) {
-            Map.Entry<String, Double> uEntry = pq.poll();
-            String u = uEntry.getKey();
-            double du = uEntry.getValue();
-
-            if (du > dist.get(u)) {
-                continue; // entrada obsoleta
-            }
-
-            if (u.equals(haciaCodigo)) {
-                break; // llegamos con el mejor costo
-            }
-
-            VerticeAeropuerto v = this.mapa.get(u);
-            if (v == null) {
-                continue;
-            }
-
-            for (AristaVuelo av : v.getSalientes()) {
-                Vuelo vu = av.getVuelo();
-                String w = av.getCodDestino();
-
-                double peso = (vu == null)
-                              ? av.getPeso()
-                              : calcularPeso(vu, metrica);
-
-                double alt = du + peso;
-
-                if (alt < dist.get(w)) {
-                    dist.put(w, alt);
-                    previo.put(w, u);
-                    vueloPrevio.put(w, vu);
-                    pq.offer(new AbstractMap.SimpleEntry<>(w, alt)); // decrease-key por reinserción
+        
+        VerticeAeropuerto vertice = buscarVertice(actual);
+        for (AristaVuelo arista : vertice.getSalientes()) {
+            String vecino = arista.getCodDestino();
+            if (!visitados.contains(vecino)) {
+                predecesores.put(vecino, actual);
+                if (dfsRecursivo(vecino, destino, visitados, predecesores)) {
+                    return true;
                 }
             }
         }
-
-        if (dist.get(haciaCodigo) == Double.POSITIVE_INFINITY) {
-            return res;
-        }
-
-        LinkedList<String> ruta = new LinkedList<>();
-        LinkedList<Vuelo> rVuelos = new LinkedList<>();
-
-        String cur = haciaCodigo;
-
-        while (cur != null) {
-            ruta.addFirst(cur);
-
-            Vuelo pf = vueloPrevio.get(cur);
-            if (pf != null) {
-                rVuelos.addFirst(pf);
+        
+        return false;
+    }
+    
+ 
+    
+    public int obtenerNumeroConexiones(String codigoAeropuerto) {
+        VerticeAeropuerto vertice = buscarVertice(codigoAeropuerto);
+        return vertice != null ? vertice.getSalientes().size() : 0;
+    }
+    
+    public String obtenerAeropuertoMasConectado() {
+        String masConectado = null;
+        int maxConexiones = -1;
+        
+        for (VerticeAeropuerto vertice : vertices) {
+            int conexiones = vertice.getSalientes().size();
+            if (conexiones > maxConexiones) {
+                maxConexiones = conexiones;
+                masConectado = vertice.getDato().getCodigo();
             }
-
-            cur = previo.get(cur);
         }
-
-        res.setEncontrada(true);
-        res.setPesoTotal(dist.get(haciaCodigo));
-        res.getRutaAeropuertos().addAll(ruta);
-        res.getRutaVuelos().addAll(rVuelos);
-
-        return res;
+        
+        return masConectado;
     }
-
-    // ------------------- Accesores -------------------
-
-    public LinkedList<VerticeAeropuerto> getVertices() {
-        return this.vertices;
+    
+    public String obtenerAeropuertoMenosConectado() {
+        String menosConectado = null;
+        int minConexiones = Integer.MAX_VALUE;
+        
+        for (VerticeAeropuerto vertice : vertices) {
+            int conexiones = vertice.getSalientes().size();
+            if (conexiones < minConexiones) {
+                minConexiones = conexiones;
+                menosConectado = vertice.getDato().getCodigo();
+            }
+        }
+        
+        return menosConectado;
     }
-
+    
+    public Map<String, Integer> obtenerEstadisticasConectividad() {
+        Map<String, Integer> estadisticas = new HashMap<>();
+        
+        for (VerticeAeropuerto vertice : vertices) {
+            String codigo = vertice.getDato().getCodigo();
+            int conexiones = vertice.getSalientes().size();
+            estadisticas.put(codigo, conexiones);
+        }
+        
+        return estadisticas;
+    }
+    
+    
+    public List<Aeropuerto> obtenerAeropuertos() {
+        List<Aeropuerto> aeropuertos = new ArrayList<>();
+        for (VerticeAeropuerto vertice : vertices) {
+            aeropuertos.add(vertice.getDato());
+        }
+        return aeropuertos;
+    }
+    
+    public List<Vuelo> obtenerVuelosDesde(String codigoAeropuerto) {
+        VerticeAeropuerto vertice = buscarVertice(codigoAeropuerto);
+        if (vertice == null) return new ArrayList<>();
+        
+        List<Vuelo> vuelos = new ArrayList<>();
+        for (AristaVuelo arista : vertice.getSalientes()) {
+            if (arista.getVuelo() != null) {
+                vuelos.add(arista.getVuelo());
+            }
+        }
+        return vuelos;
+    }
+    
+    public boolean existeRuta(String origen, String destino) {
+        return buscarRutaBFS(origen, destino) != null;
+    }
+    
+    public int obtenerNumeroVertices() {
+        return vertices.size();
+    }
+    
+    public int obtenerNumeroAristas() {
+        int total = 0;
+        for (VerticeAeropuerto vertice : vertices) {
+            total += vertice.getSalientes().size();
+        }
+        return total;
+    }
 }

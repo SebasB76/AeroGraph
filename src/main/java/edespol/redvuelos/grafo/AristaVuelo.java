@@ -34,6 +34,11 @@ public class AristaVuelo {
     public void setVuelo(Vuelo vuelo) {
         this.vuelo = vuelo;
     }
+    
+    public String getCodOrigen() {
+        return vuelo != null ? vuelo.getOrigenCodigo() : null;
+    }
+    
     public boolean coincideIdVuelo(String vueloId) {
          return this.vuelo != null  && this.vuelo.getId() != null  && this.vuelo.getId().equals(vueloId);
           

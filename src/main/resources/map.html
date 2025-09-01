@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mapa con Red de Vuelos</title>
+  <style>
+    #map { height: 100%; width: 100%; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    .info-window { max-width: 300px; font-family: Arial, sans-serif; }
+    .info-title { font-weight: bold; font-size: 16px; margin-bottom: 5px; color: #1a73e8; }
+    .info-content { font-size: 14px; }
+    .vuelo-item { padding: 5px; border-bottom: 1px solid #eee; }
+    .vuelo-item:last-child { border-bottom: none; }
+  </style>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBUCjSJQM1vC0oMXJGsZhOjqRJpO8M0RD4&callback=initMap" async defer></script>
+  <script>
+    var map;
+    var markers = [];
+    var polylines = [];
+    var infoWindow;
+    var mapReady = false;
+
+    function initMap() {
+      var centro = { lat: -0.1807, lng: -78.4678 }; // Quito
+      map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 3,
+        center: centro,
+        mapTypeId: 'roadmap',
+        streetViewControl: false
+      });
+      infoWindow = new google.maps.InfoWindow({ maxWidth: 350 });
+      mapReady = true;
+      console.log("Mapa inicializado");
+    }
+
+    function clearMap() {
+      markers.forEach(m => m.setMap(null));
+      markers = [];
+      polylines.forEach(p => p.setMap(null));
+      polylines = [];
+    }
+
+    function addMarker(lat, lon, code, name, vuelos) {
+      var marker = new google.maps.Marker({
+        position: { lat: lat, lng: lon },
+        map: map,
+        title: name + " (" + code + ")",
+        icon: { url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png", scaledSize: new google.maps.Size(32, 32) }
+      });
+
+      var content = '<div class="info-window">' +
+                    '<div class="info-title">' + name + ' (' + code + ')</div>' +
+                    '<div class="info-content">';
+      if (vuelos && vuelos.length > 0) {
+        content += '<strong>Vuelos desde este aeropuerto:</strong><br>';
+        vuelos.forEach(function(v) {
+          content += '<div class="vuelo-item">' +
+                     '➤ A: ' + v.destino + ' (' + v.aerolinea + ')<br>' +
+                     '⏰ ' + v.horaSalida + ' | ' + v.duracion + 'min<br>' +
+                     '💰 $' + v.costo + ' | ' + v.distancia + 'km' +
+                     '</div>';
+        });
+      } else {
+        content += 'No hay vuelos registrados desde este aeropuerto';
+      }
+      content += '</div></div>';
+
+      marker.addListener('click', function() { infoWindow.setContent(content); infoWindow.open(map, marker); });
+      markers.push(marker);
+      return marker;
+    }
+
+    function addRoute(lat1, lon1, lat2, lon2) {
+      var path = new google.maps.Polyline({
+        path: [{ lat: lat1, lng: lon1 }, { lat: lat2, lng: lon2 }],
+        geodesic: true,
+        strokeColor: "#FF0000",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        map: map
+      });
+      path.addListener('mouseover', () => path.setOptions({ strokeWeight: 4 }));
+      path.addListener('mouseout', () => path.setOptions({ strokeWeight: 2 }));
+      polylines.push(path);
+      return path;
+    }
+
+    function updateMapData(aeropuertosData, vuelosData) {
+  if (typeof aeropuertosData === "string") aeropuertosData = JSON.parse(aeropuertosData);
+  if (typeof vuelosData === "string") vuelosData = JSON.parse(vuelosData);
+      function doUpdate() {
+        clearMap();
+        try {
+          var aeropuertos = aeropuertosData;
+          var vuelos = vuelosData;
+
+          console.log("Aeropuertos recibidos:", aeropuertos);
+          console.log("Vuelos recibidos:", vuelos);
+
+          var vuelosPorAeropuerto = {};
+          vuelos.forEach(function(v) {
+            if (!vuelosPorAeropuerto[v.origenCodigo]) vuelosPorAeropuerto[v.origenCodigo] = [];
+            vuelosPorAeropuerto[v.origenCodigo].push(v);
+          });
+
+          aeropuertos.forEach(function(a) {
+            var vuelosDesdeAqui = vuelosPorAeropuerto[a.codigo] || [];
+            addMarker(a.latitud, a.longitud, a.codigo, a.nombre,
+              vuelosDesdeAqui.map(function(v) {
+                return { destino: v.destinoCodigo, aerolinea: v.aerolineaCodigo, horaSalida: v.horaSalida, duracion: v.duracionMin, costo: v.costoUsd, distancia: v.distanciaKm };
+              })
+            );
+          });
+
+          vuelos.forEach(function(v) {
+            var origen = aeropuertos.find(a => a.codigo === v.origenCodigo);
+            var destino = aeropuertos.find(a => a.codigo === v.destinoCodigo);
+            if (origen && destino) addRoute(origen.latitud, origen.longitud, destino.latitud, destino.longitud);
+          });
+
+        } catch(e) {
+          console.error("Error al actualizar mapa:", e);
+        }
+      }
+
+      // Esperar hasta que mapReady sea true
+      if (!mapReady) {
+        console.log("Mapa no listo, reintentando en 200ms...");
+        setTimeout(() => updateMapData(aeropuertosData, vuelosData), 200);
+      } else {
+        doUpdate();
+      }
+    }
+
+    window.initMap = initMap;
+  </script>
+</head>
+<body>
+  <div id="map"></div>
+</body>
+</html>

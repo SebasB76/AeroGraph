@@ -17,6 +17,7 @@ public class Aeropuerto {
         this.longitud = 0.0;    
     }
 
+
     public String getCodigo() {
         return codigo;
     }
