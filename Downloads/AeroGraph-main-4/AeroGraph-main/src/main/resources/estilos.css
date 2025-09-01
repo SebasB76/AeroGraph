@@ -1,0 +1,45 @@
+.card {
+    -fx-background-color: #1e1e1e;
+    -fx-background-radius: 15;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 15, 0, 0, 5);
+}
+
+.titulo {
+    -fx-text-fill: white;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.campo {
+    -fx-background-radius: 8;
+    -fx-padding: 8 12;
+    -fx-font-size: 14px;
+    -fx-background-color: #2e2e2e;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #aaaaaa;
+    -fx-border-color: transparent;
+    -fx-pref-width: 250;
+}
+
+.link {
+    -fx-text-fill: #4CAF50;
+    -fx-underline: true;
+}
+
+.btn-registrar {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 8 20;
+}
+
+.btn-login {
+    -fx-background-color: #eeeeee;
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 8 20;
+}
+

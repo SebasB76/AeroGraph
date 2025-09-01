@@ -4,13 +4,13 @@
  */
 package edespol.redvuelos;
 
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpExchange;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-
-import com.sun.net.httpserver.HttpServer;
 
 public class WebServer {
     private static HttpServer server;
@@ -22,12 +22,12 @@ public class WebServer {
             
             server.createContext("/", exchange -> {
                 try {
-                    System.out.println("Solicitud recibida en el servidor web");
+                    System.out.println("🔹 Solicitud recibida en el servidor web");
                     
                     // Verificar que el archivo existe
                     java.nio.file.Path htmlPath = Paths.get("src/main/resources/map.html");
                     if (!Files.exists(htmlPath)) {
-                        System.err.println("Archivo no encontrado: " + htmlPath.toAbsolutePath());
+                        System.err.println("❌ Archivo no encontrado: " + htmlPath.toAbsolutePath());
                         String error = "Error: Archivo map.html no encontrado en " + htmlPath.toAbsolutePath();
                         exchange.sendResponseHeaders(404, error.length());
                         exchange.getResponseBody().write(error.getBytes());
@@ -37,7 +37,7 @@ public class WebServer {
                     
                     // Leer el archivo HTML
                     String htmlContent = new String(Files.readAllBytes(htmlPath));
-                    System.out.println("Archivo HTML leído correctamente (" + htmlContent.length() + " caracteres)");
+                    System.out.println("✅ Archivo HTML leído correctamente (" + htmlContent.length() + " caracteres)");
                     
                     // Configurar headers
                     exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
@@ -49,10 +49,10 @@ public class WebServer {
                     os.write(htmlContent.getBytes("UTF-8"));
                     os.close();
                     
-                    System.out.println("Respuesta enviada correctamente");
+                    System.out.println("✅ Respuesta enviada correctamente");
                     
                 } catch (IOException e) {
-                    System.err.println("Error en el servidor web: " + e.getMessage());
+                    System.err.println("❌ Error en el servidor web: " + e.getMessage());
                     try {
                         String error = "Error interno del servidor: " + e.getMessage();
                         exchange.sendResponseHeaders(500, error.length());
@@ -65,20 +65,20 @@ public class WebServer {
             });
             
             server.start();
-            System.out.println("Web server iniciado en http://localhost:" + PORT);
-            System.out.println("Servidor web listo para recibir peticiones");
+            System.out.println("✅ Web server iniciado en http://localhost:" + PORT);
+            System.out.println("✅ Servidor web listo para recibir peticiones");
             
         } catch (IOException e) {
-            System.err.println("Error al iniciar el servidor web: " + e.getMessage());
+            System.err.println("❌ Error al iniciar el servidor web: " + e.getMessage());
             throw e;
         }
     }
 
     public static void stop() {
         if (server != null) {
-            System.out.println("Deteniendo servidor web...");
+            System.out.println("🛑 Deteniendo servidor web...");
             server.stop(0);
-            System.out.println("Servidor web detenido");
+            System.out.println("✅ Servidor web detenido");
         }
     }
 }

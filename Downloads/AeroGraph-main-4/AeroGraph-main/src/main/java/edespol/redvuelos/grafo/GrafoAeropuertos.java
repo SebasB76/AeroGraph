@@ -82,7 +82,10 @@ public class GrafoAeropuertos {
         return v.getDistanciaKm();
     }
 
-
+    // ======================================================
+    // 🔹 ALGORITMO DE DIJKSTRA PARA RUTAS ÓPTIMAS
+    // ======================================================
+    
     public static class RutaOptima {
         private List<String> aeropuertos;
         private double pesoTotal;
@@ -172,6 +175,10 @@ public class GrafoAeropuertos {
         return new RutaOptima(ruta, distancias.get(destino), vuelosRuta);
     }
     
+    // ======================================================
+    // 🔹 ALGORITMO BFS PARA BÚSQUEDA EN ANCHURA
+    // ======================================================
+    
     public List<String> buscarRutaBFS(String origen, String destino) {
         if (origen == null || destino == null || buscarVertice(origen) == null || buscarVertice(destino) == null) {
             return null;
@@ -213,7 +220,10 @@ public class GrafoAeropuertos {
         return null; // No hay ruta
     }
     
-
+    // ======================================================
+    // 🔹 ALGORITMO DFS PARA BÚSQUEDA EN PROFUNDIDAD
+    // ======================================================
+    
     public List<String> buscarRutaDFS(String origen, String destino) {
         if (origen == null || destino == null || buscarVertice(origen) == null || buscarVertice(destino) == null) {
             return null;
@@ -234,65 +244,6 @@ public class GrafoAeropuertos {
         }
         
         return null;
-    }
-    
-    public List<String> buscarRutaDFSPila(String origen, String destino) {
-        if (origen == null || destino == null || buscarVertice(origen) == null || buscarVertice(destino) == null) {
-            return null;
-        }
-        
-        Set<String> visitados = new HashSet<>();
-        Map<String, String> predecesores = new HashMap<>();
-        Stack<String> pila = new Stack<>();
-        
-        // Inicializar con el nodo origen
-        pila.push(origen);
-        visitados.add(origen);
-        predecesores.put(origen, null);
-        
-        while (!pila.isEmpty()) {
-            String nodoActual = pila.peek(); // Solo mirar, no sacar aún
-            
-            // Si encontramos el destino, reconstruir ruta
-            if (nodoActual.equals(destino)) {
-                List<String> ruta = new ArrayList<>();
-                String nodo = destino;
-                while (nodo != null) {
-                    ruta.add(0, nodo);
-                    nodo = predecesores.get(nodo);
-                }
-                return ruta;
-            }
-            
-            // Explorar vecinos del nodo actual
-            VerticeAeropuerto vertice = buscarVertice(nodoActual);
-            if (vertice != null) {
-                // Buscar el primer vecino no visitado
-                String proximoVecino = null;
-                for (AristaVuelo arista : vertice.getSalientes()) {
-                    String vecino = arista.getCodDestino();
-                    if (!visitados.contains(vecino)) {
-                        proximoVecino = vecino;
-                        break; // Solo tomar el primer vecino no visitado
-                    }
-                }
-                
-                if (proximoVecino != null) {
-                    // Explorar este vecino (DFS: ir hacia adelante)
-                    visitados.add(proximoVecino);
-                    predecesores.put(proximoVecino, nodoActual);
-                    pila.push(proximoVecino);
-                } else {
-                    // No hay más vecinos no visitados, retroceder
-                    pila.pop();
-                }
-            } else {
-                // Nodo no válido, retroceder
-                pila.pop();
-            }
-        }
-    
-        return null; // No se encontró ruta
     }
     
     private boolean dfsRecursivo(String actual, String destino, Set<String> visitados, Map<String, String> predecesores) {
