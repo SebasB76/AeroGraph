@@ -2,7 +2,7 @@
 
 
 
-**AeroGraph** ha sido completamente rediseñado con una interfaz moderna y elegante que sigue los principios de **Material Design 3.0**, ofreciendo una experiencia de usuario excepcional.
+**AeroGraph** ha sido completamente rediseñado con una interfaz moderna y elegante , ofreciendo una experiencia de usuario excepcional.
 
 ### ✨ **Características de la Neva Interfaz:**
 
