@@ -1,0 +1,284 @@
+{
+  "meta": {
+    "country": "EC",
+    "version": "0.1.0",
+    "updatedAtISO": "2026-01-17T00:00:00-05:00",
+    "notes": "Catalogo inicial MVP (7 tramites). Requisitos en forma de IDs reutilizables. stopCategory indica si un requisito genera parada fisica (pago/copias) o solo checklist/online."
+  },
+  "stopCategories": {
+    "none": { "description": "No genera parada; solo checklist" },
+    "online": { "description": "Paso online, sin parada fisica" },
+    "cita": { "description": "Paso previo de agendamiento; sin parada fisica" },
+    "pago": { "description": "Parada fisica para pago (si no se pago online)" },
+    "copias": { "description": "Parada fisica para copias/impresion" },
+    "notaria": { "description": "Destino final: notaria" },
+    "registro_civil": { "description": "Destino final: Registro Civil" },
+    "ant_agencia": { "description": "Destino final: Agencia ANT" },
+    "sri_oficina": { "description": "Destino final: Oficina SRI" }
+  },
+  "requirementsDictionary": {
+    "IDENTIFICACION_COMPARECIENTES": {
+      "name": "Identificacion de los comparecientes (cedula/pasaporte)",
+      "stopCategory": "none",
+      "synonyms": ["cedula", "cédula", "pasaporte", "identificacion", "identificación", "documento de identidad"]
+    },
+    "DOCUMENTO_A_CERTIFICAR": {
+      "name": "Documento a certificar / notarizar",
+      "stopCategory": "none",
+      "synonyms": ["documento", "carta", "contrato", "declaracion", "declaración", "original"]
+    },
+    "PAGO_TARIFA_NOTARIAL": {
+      "name": "Pago de tarifa notarial",
+      "stopCategory": "pago",
+      "synonyms": ["pago", "tasa", "tarifa", "comprobante", "voucher", "recibo", "factura", "no he pagado", "me falta pagar"]
+    },
+    "COMPROBANTE_PAGO": {
+      "name": "Comprobante de pago",
+      "stopCategory": "pago",
+      "synonyms": ["comprobante", "voucher", "recibo", "pago", "tasa", "no he pagado", "me falta pagar"]
+    },
+    "CEDULA_ANTERIOR": {
+      "name": "Cedula anterior (si aplica)",
+      "stopCategory": "none",
+      "synonyms": ["cedula anterior", "mi cedula vieja", "cédula anterior", "cédula vieja"]
+    },
+    "CONSTANCIA_DOCUMENTO_EXTRAVIADO": {
+      "name": "Constancia por extravio/robo (si aplica)",
+      "stopCategory": "none",
+      "synonyms": ["robo", "me robaron", "perdi", "perdí", "extravio", "extravío", "denuncia", "constancia"]
+    },
+    "PERFIL_AGENCIA_VIRTUAL": {
+      "name": "Usuario/Perfil en Agencia Virtual (si aplica)",
+      "stopCategory": "online",
+      "synonyms": ["agencia virtual", "usuario", "clave", "cuenta", "registro"]
+    },
+    "PAGO_EN_LINEA": {
+      "name": "Pago en linea (si aplica)",
+      "stopCategory": "online",
+      "synonyms": ["pago en linea", "pago online", "tarjeta", "pagar con tarjeta", "pague online"]
+    },
+    "RETIRO_DOCUMENTO_EN_AGENCIA": {
+      "name": "Retiro del documento en agencia",
+      "stopCategory": "registro_civil",
+      "synonyms": ["retiro", "retirar", "agencia", "oficina", "registro civil"]
+    },
+    "TURNO_CITA": {
+      "name": "Turno / cita previa",
+      "stopCategory": "cita",
+      "synonyms": ["turno", "cita", "agendar", "agenda", "reservar", "sacar turno"]
+    },
+    "CEDULA_O_PASAPORTE": {
+      "name": "Cedula o pasaporte",
+      "stopCategory": "none",
+      "synonyms": ["cedula", "cédula", "pasaporte", "identificacion", "identificación"]
+    },
+    "ACCESO_WEB": {
+      "name": "Acceso a internet / portal web",
+      "stopCategory": "online",
+      "synonyms": ["web", "pagina", "página", "portal", "internet", "en linea", "en línea"]
+    },
+    "USUARIO_Y_CLAVE_REGISTRO_CIVIL": {
+      "name": "Usuario y clave del Registro Civil (si aplica)",
+      "stopCategory": "online",
+      "synonyms": ["usuario", "clave", "registro civil", "cuenta", "agencia virtual"]
+    },
+    "DESCARGA_DOCUMENTO": {
+      "name": "Descarga del documento (pdf)",
+      "stopCategory": "online",
+      "synonyms": ["descargar", "descarga", "pdf", "imprimir", "archivo"]
+    },
+    "CEDULA_IDENTIDAD": {
+      "name": "Cedula de identidad",
+      "stopCategory": "none",
+      "synonyms": ["cedula", "cédula", "identidad"]
+    },
+    "CERTIFICADO_VOTACION": {
+      "name": "Certificado de votacion (si aplica)",
+      "stopCategory": "none",
+      "synonyms": ["certificado de votacion", "certificado votacion", "papeleta", "votacion"]
+    },
+    "DOCUMENTO_DOMICILIO": {
+      "name": "Documento que acredite domicilio (planilla/servicio basico)",
+      "stopCategory": "none",
+      "synonyms": ["domicilio", "planilla", "luz", "agua", "telefono", "teléfono", "servicio basico", "servicio básico"]
+    },
+    "COPIA_COLOR": {
+      "name": "Copia a color (si aplica)",
+      "stopCategory": "copias",
+      "synonyms": ["copia", "copias", "fotocopia", "impresion", "impresión", "a color", "copia a color", "me faltan copias"]
+    }
+  },
+  "tramites": [
+    {
+      "id": "NOTARIA_CERTIFICACION_DOC",
+      "name": "Notaria - Certificacion/servicios notariales (generico)",
+      "institution": "Consejo de la Judicatura",
+      "sourceUrl": "https://www.funcionjudicial.gob.ec/servicios-notariales/",
+      "destinationCategory": "notaria",
+      "required": [
+        "IDENTIFICACION_COMPARECIENTES",
+        "DOCUMENTO_A_CERTIFICAR"
+      ],
+      "optional": [
+        "COPIA_COLOR",
+        "PAGO_TARIFA_NOTARIAL"
+      ],
+      "notes": "Requisitos exactos dependen del acto notarial. Si el usuario dice que no ha pagado, se agrega parada de pago."
+    },
+    {
+      "id": "RC_CEDULA_RENOVACION",
+      "name": "Registro Civil - Renovacion/Emision de cedula",
+      "institution": "Direccion General de Registro Civil, Identificacion y Cedulacion",
+      "sourceUrl": "https://www.gob.ec/registro-civil",
+      "destinationCategory": "registro_civil",
+      "required": [
+        "COMPROBANTE_PAGO",
+        "CEDULA_O_PASAPORTE"
+      ],
+      "optional": [
+        "CEDULA_ANTERIOR",
+        "CONSTANCIA_DOCUMENTO_EXTRAVIADO",
+        "TURNO_CITA"
+      ],
+      "notes": "Puede variar segun perdida/robo o primera vez. El pago puede ser online o presencial."
+    },
+    {
+      "id": "RC_CEDULA_DUPLICADO",
+      "name": "Registro Civil - Duplicado de cedula",
+      "institution": "Direccion General de Registro Civil, Identificacion y Cedulacion",
+      "sourceUrl": "https://www.gob.ec/registro-civil",
+      "destinationCategory": "registro_civil",
+      "required": [
+        "PERFIL_AGENCIA_VIRTUAL",
+        "PAGO_EN_LINEA",
+        "RETIRO_DOCUMENTO_EN_AGENCIA"
+      ],
+      "optional": [],
+      "notes": "El flujo tipico incluye gestion online y retiro en agencia."
+    },
+    {
+      "id": "ANT_LICENCIA_RENOVACION_NO_PRO",
+      "name": "ANT - Renovacion de licencia no profesional (A, B, F)",
+      "institution": "Agencia Nacional de Transito",
+      "sourceUrl": "https://www.gob.ec/ant",
+      "destinationCategory": "ant_agencia",
+      "required": [
+        "COMPROBANTE_PAGO",
+        "CEDULA_O_PASAPORTE"
+      ],
+      "optional": [
+        "TURNO_CITA"
+      ],
+      "notes": "Los requisitos pueden cambiar segun tipo de licencia y normativa vigente. El turno/cita puede ser obligatorio segun canal."
+    },
+    {
+      "id": "MDG_ANTECEDENTES_PENALES",
+      "name": "Ministerio de Gobierno - Certificado de antecedentes penales",
+      "institution": "Ministerio de Gobierno (MDG)",
+      "sourceUrl": "https://www.gob.ec/minterior/tramites/emision-certificado-antecedentes-penales",
+      "destinationCategory": "online",
+      "required": [
+        "CEDULA_O_PASAPORTE",
+        "ACCESO_WEB"
+      ],
+      "optional": [
+        "DESCARGA_DOCUMENTO"
+      ],
+      "notes": "Tramite usualmente online y gratuito; no requiere ruta fisica salvo que el usuario necesite imprimir."
+    },
+    {
+      "id": "RC_COPIA_ACTA_REGISTRAL",
+      "name": "Registro Civil - Copia de acta registral (nacimiento/matrimonio/defuncion)",
+      "institution": "Direccion General de Registro Civil, Identificacion y Cedulacion",
+      "sourceUrl": "https://www.gob.ec/registro-civil",
+      "destinationCategory": "online",
+      "required": [
+        "USUARIO_Y_CLAVE_REGISTRO_CIVIL",
+        "ACCESO_WEB",
+        "DESCARGA_DOCUMENTO"
+      ],
+      "optional": [
+        "COMPROBANTE_PAGO"
+      ],
+      "notes": "Puede requerir pago segun tipo de copia/certificado; si el usuario no puede pagar online, se sugiere parada de pago."
+    },
+    {
+      "id": "SRI_INSCRIPCION_RUC_PN",
+      "name": "SRI - Inscripcion en el RUC (persona natural)",
+      "institution": "Servicio de Rentas Internas (SRI)",
+      "sourceUrl": "https://www.gob.ec/sri/tramites/inscripcion-ruc-persona-natural",
+      "destinationCategory": "sri_oficina",
+      "required": [
+        "CEDULA_IDENTIDAD",
+        "CERTIFICADO_VOTACION",
+        "DOCUMENTO_DOMICILIO"
+      ],
+      "optional": [
+        "TURNO_CITA"
+      ],
+      "notes": "Puede variar por canal (presencial/online) y condicion del contribuyente. Mantener como flujo presencial para MVP."
+    }
+  ],
+  "providersCatalog": {
+    "pago": [
+      {
+        "id": "PAGO_PLACEHOLDER_1",
+        "name": "Punto de pago (placeholder)",
+        "address": "Por definir",
+        "lat": null,
+        "lng": null,
+        "city": null
+      }
+    ],
+    "copias": [
+      {
+        "id": "COPIAS_PLACEHOLDER_1",
+        "name": "Centro de copias (placeholder)",
+        "address": "Por definir",
+        "lat": null,
+        "lng": null,
+        "city": null
+      }
+    ],
+    "notaria": [
+      {
+        "id": "NOTARIA_PLACEHOLDER_1",
+        "name": "Notaria (placeholder)",
+        "address": "Por definir",
+        "lat": null,
+        "lng": null,
+        "city": null
+      }
+    ],
+    "registro_civil": [
+      {
+        "id": "RC_PLACEHOLDER_1",
+        "name": "Agencia Registro Civil (placeholder)",
+        "address": "Por definir",
+        "lat": null,
+        "lng": null,
+        "city": null
+      }
+    ],
+    "ant_agencia": [
+      {
+        "id": "ANT_PLACEHOLDER_1",
+        "name": "Agencia ANT (placeholder)",
+        "address": "Por definir",
+        "lat": null,
+        "lng": null,
+        "city": null
+      }
+    ],
+    "sri_oficina": [
+      {
+        "id": "SRI_PLACEHOLDER_1",
+        "name": "Oficina SRI (placeholder)",
+        "address": "Por definir",
+        "lat": null,
+        "lng": null,
+        "city": null
+      }
+    ]
+  }
+}
