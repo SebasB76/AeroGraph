@@ -1,5 +1,4 @@
-OJO: se debe colocar las keys.!
-Este proyecto es un sistema que representa una red de aeropuertos y vuelos utilizando grafos. Permite calcular rutas, buscar conexiones entre aeropuertos y obtener estadísticas de conectividad. Además de los algoritmos, incluye interfaz visual con JavaFX, persistencia de datos y un servidor web embebido.
+
 
 Funciones principales:
 
